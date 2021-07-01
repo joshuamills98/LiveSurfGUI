@@ -1,0 +1,7 @@
+/__pycache__
+/.vscode
+/env
+/ghostdriver.log
+/tools/__pycache__
+/wind_analysis/__pycache__
+/swell_analysis/__pycache__
