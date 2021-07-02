@@ -20,7 +20,10 @@ class SwellDataDisplayer:
 
         self.parent = parent
         self.frame = tk.Frame(self.parent)
-        swell_data_main()
+        self.data_location = tk.StringVar(self.frame)
+        self.data_location.set("Batemans Bay")
+        self.location_list = ["Batemans Bay", "Eden", "Port Kembla"]
+        swell_data_main(self.data_location.get())
         # Call in csv data
         self.swell_height, self.swell_period, self.swell_direction = \
             self.get_and_clean_data()
@@ -32,6 +35,10 @@ class SwellDataDisplayer:
                                        command=self.update,
                                        height=2,
                                        width=20)
+        self.location_selector = tk.OptionMenu(
+            self.frame,
+            self.data_location,
+            *self.location_list)
         self.place_swell_history()
         self.canvas.draw()
         self.arrowtk_image = ImageTk.PhotoImage(generate_arrow_image(
@@ -53,6 +60,7 @@ class SwellDataDisplayer:
                             angle=self.swell_direction[-1])
         
         # Place all features
+        self.location_selector.grid(row=5, column=0, pady=1)
         self.update_button.grid(row=5, column=1, columnspan=2, pady=1)
         self.arrow_label.grid(row=1, column=0)
         self.date_format.grid(row=3, column=0, pady=0, padx=1)
@@ -124,12 +132,12 @@ class SwellDataDisplayer:
     def convert_to_datetime(self, df):
         df = df.set_index(
             pd.to_datetime(df.iloc[:, 0],
-                        format="%Y-%m-%d %H:%M:%S"))
+                           format="%Y-%m-%d %H:%M:%S"))
         df = df.iloc[:, 1:]
         return df
 
     def update(self):
-        swell_data_main()
+        swell_data_main(self.data_location.get())
         self.arrow_label.grid_forget()
         self.date_format.grid_forget()
         self.swell_label.grid_forget()
@@ -158,7 +166,7 @@ class SwellDataDisplayer:
                             height=self.swell_height[-1],
                             period=self.swell_period[-1],
                             angle=self.swell_direction[-1])
-
+        self.location_selector.grid(row=5, column=0, pady=1)
         self.arrow_label.grid(row=1, column=0)
         self.date_format.grid(row=3, column=0, pady=0, padx=1)
         self.swell_label.grid(row=2, column=0, pady=0, padx=1)
@@ -187,7 +195,11 @@ class WindDataDisplayer:
                                'station=94939',
             'Moruya Airport': 'https://ozforecast.com.au/'
                               'cgi-bin/weatherstation'
-                              '.cgi?station=95937'}
+                              '.cgi?station=95937',
+            'Braidwood': "https://ozforecast.com.au/"
+                         "cgi-bin/weatherstation.cgi?"
+                         "station=94927"                              
+                        }
         wind_data_main(self.wind_data_url_dict[self.data_location.get()])
 
         # Call in csv data
