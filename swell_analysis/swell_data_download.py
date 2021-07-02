@@ -88,18 +88,18 @@ def download_histories():
         f.write(response.content)
 
 
-def download_swell_rose():
-    """Download latest swell rose from BOM"""
-    content = requests.get(url="https://mhl.nsw.gov.au/Station-BATBOW")
-    soup = BeautifulSoup(content.text, 'html.parser')
-    swell_map_url = soup.select(".order-lg-2 .img-fluid")[0]['src']
-    path = os.path.join("swell_analysis", "images", "swell_rose.png")
-    download_image(swell_map_url, path)
+# def download_swell_rose():
+#     """Download latest swell rose from BOM"""
+#     content = requests.get(url="https://mhl.nsw.gov.au/Station-BATBOW")
+#     soup = BeautifulSoup(content.text, 'html.parser')
+#     swell_map_url = soup.select(".order-lg-2 .img-fluid")[0]['src']
+#     path = os.path.join("swell_analysis", "images", "swell_rose.png")
+#     download_image(swell_map_url, path)
 
 
 def swell_data_main():
     download_histories()
-    download_swell_rose()
+    # download_swell_rose()
 
 
 if __name__ == '__main__':

@@ -2,6 +2,7 @@ import urllib.request
 from bs4 import BeautifulSoup
 import pandas as pd
 import os
+import numpy as np
 import re
 from datetime import datetime, timedelta
 
@@ -14,12 +15,14 @@ def clean_wind_table(df):
     """Strip out all white space and wrong characters and return df"""
     df = df.iloc[1:, :]
 
+    df = df.dropna(axis=0,
+                   subset=['Wind(km/h)/(kt)'])
     # Remove "Yesterday" and "Today" from date column
-    df.iloc[:, 0] = df.iloc[:, 0].apply(
+    df.loc[:, 'Time(UTC+10:00)'] = df.loc[:, 'Time(UTC+10:00)'].apply(
         lambda x: re.sub('([a-z]|[A-Z])+', '', x).strip())  
 
     # Remove "/" symbol, select knots and replace '-' values with 0 kts
-    df.loc[:, 'Wind(km/h)/(kt)'] = df.loc[:, 'Wind(km/h)/(kt)']\
+    df.loc[:, 'Wind(km/h)/(kt)'] = df.loc[:, 'Wind(km/h)/(kt)'] \
         .apply(lambda x: re.sub('\d+\s+\/\s+', '',
                                 x.replace('-', '0')).strip())
 
@@ -27,9 +30,11 @@ def clean_wind_table(df):
         .apply(lambda x: re.sub('\d+\s+\/\s+', '',
                                 x.replace('-', '0')).strip())
 
-    # Replace '-' with westerly winds (this needs to be verified)
+    # Replace '-' with wind value from last reading 
     df.loc[:, 'WindDir.'] = df.loc[:, 'WindDir.'] \
-        .apply(lambda x: x.replace('-', 'W'))
+        .replace('-', np.nan) \
+        .fillna(method='ffill')
+    
     return df
 
 
@@ -56,13 +61,11 @@ def convert_to_datetime(df, date_of_usage, format="%H:%M"):
         replace(year=year,
                 month=month,
                 day=day)
-    print(latest_date)
     num_time_steps = df.shape[0]
     date_range = [latest_date - timedelta(minutes=10*x) for x in
                   range(num_time_steps)]
-    df['date'] = date_range
+    df.loc[:, 'date'] = date_range
     df.set_index(['date'], inplace=True)
-    print(df.index[-1])
     return df
 
 
@@ -114,6 +117,8 @@ def wind_data_main(source):
 
 
 if __name__ == '__main__':
-    source = "https://ozforecast.com.au/cgi-bin/"\
-             "weatherstation.cgi?station=95937"
+    wind_location = 'Moruya Airport'
+    wind_data_url_dict = {'Montague Island': 'https://ozforecast.com.au/cgi-bin/weatherstation.cgi?station=94939',
+                          'Moruya Airport': "https://ozforecast.com.au/cgi-bin/weatherstation.cgi?station=95937"}
+    source = wind_data_url_dict[wind_location]
     wind_data_main(source)

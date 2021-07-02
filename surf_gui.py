@@ -7,6 +7,7 @@ from PIL import ImageTk, Image
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 from matplotlib import dates
+import matplotlib.ticker as mticker
 import numpy as np
 import os
 
@@ -29,16 +30,11 @@ def plot_on_axis(ax, data, name, c,
                  xticks_swell=False,
                  xticks_wind=False,
                  compass_change=False,
-                 resample=False):
-    if resample:
-        data.resample('5h').mean().plot(
-                ax=ax,
+                 rolling_window=3):
+
+    data.rolling(window=rolling_window).mean().plot(ax=ax,
                 c=c,
                 grid=True)
-    else:
-        data.plot(ax=ax,
-                  c=c,
-                  grid=True)
 
     ax.grid(alpha=0.5)
     ax.set_yticks(np.linspace(min(data),
@@ -49,15 +45,19 @@ def plot_on_axis(ax, data, name, c,
     ax.set_title(name)
     if xticks_swell or xticks_wind:
         if xticks_swell:
-            ax.set_xticklabels(ax.get_xticklabels(),
-                               rotation=0,
-                               ha='center')
+            # ax.set_xticklabels(ax.get_xticklabels(),
+            #                    rotation=0,
+            #                    ha='center')
+            ticks_loc = ax.get_xticks().tolist()
+            ax.xaxis.set_major_locator(mticker.FixedLocator(ticks_loc))
             ax.xaxis.set_major_formatter(
                     dates.DateFormatter('%d\n%a'))
-        if xticks_wind:
-            ax.set_xticklabels(ax.get_xticklabels(),
-                               rotation=0,
-                               ha='center')
+            ax.xaxis.set_tick_params(rotation=0,
+                                     )
+        # if xticks_wind:
+            # ax.set_xticklabels(ax.get_xticklabels(),
+            #                    rotation=0,
+            #                    ha='center')
             # ax.xaxis.set_major_formatter(
             #         dates.DateFormatter('%a\n%H:%M'))
     else:
@@ -85,17 +85,17 @@ def place_swell_history():
     swell_direction = convert_to_datetime(swell_direction).iloc[:, 0]
     fig, ax = plt.subplots(3, 1, figsize=(5, 6), dpi=100)
 
-    plot_on_axis(ax=ax[0], 
+    plot_on_axis(ax=ax[0],
                  data=swell_height,
                  name='Swell Height (m)',
                  c='coral',
-                 resample=True)
+                 )
 
     plot_on_axis(ax=ax[1],
                  data=swell_period,
                  name='Swell Period (s)',
                  c='deepskyblue',
-                 resample=True)
+                 )
 
     plot_on_axis(ax=ax[2],
                  data=swell_direction,
@@ -103,7 +103,7 @@ def place_swell_history():
                  c='palegreen',
                  xticks_swell=True,
                  compass_change=True,
-                 resample=False)
+                 )
 
     _ = fig.tight_layout()
     canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
@@ -122,6 +122,7 @@ def place_swell_history():
                     swell_height[-1],
                     swell_period[-1],
                     swell_direction[-1])
+    plt.close(fig)
 
 
 def plot_arrow(angle, row, column, image_path, size):
@@ -141,7 +142,9 @@ def plot_swell_text(time, height, period, angle):
     strtime = time.strftime("%a %H:%M")
     compass_direction = tkinter.Label(
         root,
-        text="Swell Direction" + "\n" + compass_reversal[angle],
+        text="Swell Direction" + \
+             "\n" + compass_reversal[angle] + \
+             " ({})".format(str(angle)),
         font=fontStyle)
 
     swell_label = tkinter.Label(
@@ -185,7 +188,8 @@ def plot_wind_history(location):
                  name='Wind Direction',
                  c='mediumpurple',
                  xticks_wind=True,
-                 compass_change=True)
+                 compass_change=True,
+                 rolling_window=5)
     _ = fig.tight_layout()
 
     canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
@@ -207,6 +211,7 @@ def plot_wind_history(location):
                    speed=wind_df['Wind(km/h)/(kt)'][0],
                    direction=wind_df['WindDir.'][0],
                    gusts=wind_df['Gust(km/h)/(kt)'][0])
+    plt.close(fig)
 
 
 def plot_wind_text(time, temp, speed, direction, gusts):
@@ -263,7 +268,7 @@ def plot_wind_text(time, temp, speed, direction, gusts):
 
 if __name__ == '__main__':
     swell_data_main()
-    wind_location = 'Moruya Airport'
+    wind_location = 'Montague Island'
     wind_data_url_dict = {'Montague Island': 'https://ozforecast.com.au/cgi-bin/weatherstation.cgi?station=94939',
                           'Moruya Airport': "https://ozforecast.com.au/cgi-bin/weatherstation.cgi?station=95937"}
     wind_data_main(wind_data_url_dict[wind_location])
