@@ -9,11 +9,14 @@ One of my largest frustrations is needing to go to many different websites in or
 
 I am currently extending its functionality to incorporate a wider range of locations.
 
+## Data Sources
+This project makes use of live swell data provided by [Manly Hydraulics Lab](https://mhl.nsw.gov.au/) as well as live wind data provided by [OzForecast](ozforecast.com.au)
+
+
+## Usage
+After installing the requirements.txt file, run *surfGUI.py*. The locations can be changed by selecting from the dropdowns and pressing *Update Swell/Wind Chart*.
+
 ### Example of GUI
 ![alt text](https://github.com/joshuamills98/LiveSurfGUI/blob/master/images/GUIscreenshot.png?raw=true)
 
 
-## Data Sources
-This project makes use of live swell data provided by [Manly Hydraulics Lab](https://mhl.nsw.gov.au/) as well as live wind data provided by [OzForecast](ozforecast.com.au)
-## Usage
-After installing the requirements.txt file, run *surfGUI.py*
