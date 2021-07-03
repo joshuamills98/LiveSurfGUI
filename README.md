@@ -12,5 +12,8 @@ I am currently extending its functionality to incorporate a wider range of locat
 ### Example of GUI
 ![alt text](https://github.com/joshuamills98/LiveSurfGUI/blob/master/images/GUIscreenshot.png?raw=true)
 
+
+## Data Sources
+This project makes use of live swell data provided by [Manly Hydraulics Lab](https://mhl.nsw.gov.au/) as well as live wind data provided by [OzForecast](ozforecast.com.au)
 ## Usage
 After installing the requirements.txt file, run *surfGUI.py*
