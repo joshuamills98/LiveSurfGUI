@@ -19,7 +19,7 @@ def clean_wind_table(df):
                    subset=['Wind(km/h)/(kt)'])
     # Remove "Yesterday" and "Today" from date column
     df.loc[:, 'Time(UTC+10:00)'] = df.loc[:, 'Time(UTC+10:00)'].apply(
-        lambda x: re.sub('([a-z]|[A-Z])+', '', x).strip())  
+        lambda x: re.sub('([a-z]|[A-Z])+', '', x).strip())
 
     # Remove "/" symbol, select knots and replace '-' values with 0 kts
     df.loc[:, 'Wind(km/h)/(kt)'] = df.loc[:, 'Wind(km/h)/(kt)'] \
@@ -30,7 +30,7 @@ def clean_wind_table(df):
         .apply(lambda x: re.sub('\d+\s+\/\s+', '',
                                 x.replace('-', '0')).strip())
 
-    # Replace '-' with wind value from last reading 
+    # Replace '-' with wind value from last reading
     df.loc[:, 'WindDir.'] = df.loc[:, 'WindDir.'] \
         .replace('-', np.nan) \
         .fillna(method='ffill')
@@ -118,7 +118,9 @@ def wind_data_main(source):
 
 if __name__ == '__main__':
     wind_location = 'Moruya Airport'
-    wind_data_url_dict = {'Montague Island': 'https://ozforecast.com.au/cgi-bin/weatherstation.cgi?station=94939',
-                          'Moruya Airport': "https://ozforecast.com.au/cgi-bin/weatherstation.cgi?station=95937"}
+    wind_data_url_dict = {'Montague Island':
+                          'https://ozforecast.com.au/cgi-bin/weatherstation.cgi?station=94939',
+                          'Moruya Airport':
+                          "https://ozforecast.com.au/cgi-bin/weatherstation.cgi?station=95937"}
     source = wind_data_url_dict[wind_location]
     wind_data_main(source)

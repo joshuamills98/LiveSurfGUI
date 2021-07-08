@@ -1,7 +1,7 @@
 import requests
 import os
-from swell_analysis.swell_api_keys import get_bateman_buoys, get_eden_buoys, get_kembla_buoys
-
+from swell_analysis.swell_api_keys import *
+from bs4 import BeautifulSoup
 
 def download_image(image_url, path):
     """Download image from web to a path given"""
@@ -13,7 +13,7 @@ def download_image(image_url, path):
 
 def download_histories(location="Batemans Bay"):
     """Download swell history in the form of
-    wave height, period, and direction using BOM API urls
+    wave height, period, and direction using MHL API urls
     """
     if location == "Batemans Bay":
         wave_height_url, wave_direction_url, wave_period_url \
@@ -24,7 +24,9 @@ def download_histories(location="Batemans Bay"):
     if location == "Port Kembla":
         wave_height_url, wave_direction_url, wave_period_url \
             = get_kembla_buoys()
-
+    if location == "Sydney":
+        wave_height_url, wave_direction_url, wave_period_url \
+            = get_sydney_buoys()
     # Get and save wave data files
     response = requests.get(wave_height_url)
     with open(os.path.join("swell_analysis",
@@ -45,14 +47,16 @@ def download_histories(location="Batemans Bay"):
         f.write(response.content)
 
 
-# def download_swell_rose():
-#     """Download latest swell rose from BOM"""
-#     content = requests.get(url="https://mhl.nsw.gov.au/Station-BATBOW")
-#     soup = BeautifulSoup(content.text, 'html.parser')
-#     swell_map_url = soup.select(".order-lg-2 .img-fluid")[0]['src']
-#     path = os.path.join("swell_analysis", "images", "swell_rose.png")
-#     download_image(swell_map_url, path)
-
+def download_swell_rose():
+    """Download latest swell rose from BOM"""
+    try:
+        content = requests.get(url="https://mhl.nsw.gov.au/Station-BATBOW")
+        soup = BeautifulSoup(content.text, 'html.parser')
+        swell_map_url = soup.select(".order-lg-2 .img-fluid")[0]['src']
+        path = os.path.join("swell_analysis", "images", "swell_rose.png")
+        download_image(swell_map_url, path)
+    except:
+        print("Unable to download image")
 
 def swell_data_main(location):
     download_histories(location)
@@ -60,4 +64,5 @@ def swell_data_main(location):
 
 
 if __name__ == '__main__':
-    swell_data_main()
+    # swell_data_main()
+    download_swell_rose()

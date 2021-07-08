@@ -7,12 +7,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 from PIL import ImageTk
+
 # Local Imports
-from swell_analysis.swell_data_download import swell_data_main
+from swell_analysis.swell_data_download import (
+    swell_data_main, download_swell_rose)
 from wind_analysis.wind_data_download import wind_data_main
 from tools.compass import compass_reversal
 from tools.color_converter import get_temp_colour
-from tools.plotting import plot_on_axis, generate_arrow_image
+from tools.plotting import plot_on_axis, tide_plot, generate_arrow_image
+from tide_analysis.tide_data_download import download_histories
 
 
 class SwellDataDisplayer:
@@ -22,7 +25,7 @@ class SwellDataDisplayer:
         self.frame = tk.Frame(self.parent)
         self.data_location = tk.StringVar(self.frame)
         self.data_location.set("Batemans Bay")
-        self.location_list = ["Batemans Bay", "Eden", "Port Kembla"]
+        self.location_list = ["Batemans Bay", "Eden", "Port Kembla", "Sydney"]
         swell_data_main(self.data_location.get())
         # Call in csv data
         self.swell_height, self.swell_period, self.swell_direction = \
@@ -43,7 +46,8 @@ class SwellDataDisplayer:
         self.canvas.draw()
         self.arrowtk_image = ImageTk.PhotoImage(generate_arrow_image(
                 angle=self.swell_direction[-1],
-                size=40*self.swell_height[-1],
+                width=40*self.swell_height[-1],
+                height=40*self.swell_height[-1],
                 image_path=os.path.join('swell_analysis',
                                         'images',
                                         'swell_arrow.png')))
@@ -87,7 +91,8 @@ class SwellDataDisplayer:
         plot_on_axis(ax=self.ax[0],
                      data=self.swell_height,
                      name='Swell Height (m)',
-                     c='coral')
+                     c='coral',
+                     rolling_window=1)
 
         plot_on_axis(ax=self.ax[1],
                      data=self.swell_period,
@@ -153,7 +158,8 @@ class SwellDataDisplayer:
         self.canvas.draw()
         self.arrowtk_image = ImageTk.PhotoImage(generate_arrow_image(
             angle=self.swell_direction[-1],
-            size=40*self.swell_height[-1],
+            width=40*self.swell_height[-1],
+            height=40*self.swell_height[-1],
             image_path=os.path.join('swell_analysis',
                                     'images',
                                     'swell_arrow.png')))
@@ -214,7 +220,8 @@ class WindDataDisplayer:
         self.canvas.draw()
         self.arrowtk_image = ImageTk.PhotoImage(generate_arrow_image(
                 angle=compass_reversal.reverse(self.wind_data['WindDir.'][0]),
-                size=40 + 7*self.wind_data['Wind(km/h)/(kt)'][0],
+                width=40 + 7*self.wind_data['Wind(km/h)/(kt)'][0],
+                height=40 + 7*self.wind_data['Wind(km/h)/(kt)'][0],
                 image_path=os.path.join('wind_analysis',
                                         'images',
                                         'wind_arrow.png')))
@@ -248,6 +255,7 @@ class WindDataDisplayer:
                             csv_name)
         wind_df = pd.read_csv(path, index_col=0)
         wind_df.index = pd.to_datetime(wind_df.index)
+        wind_df.dropna(inplace=True)
         return wind_df
 
     def place_wind_history(self):
@@ -321,7 +329,8 @@ class WindDataDisplayer:
         self.canvas.draw()
         self.arrowtk_image = ImageTk.PhotoImage(generate_arrow_image(
                 angle=compass_reversal.reverse(self.wind_data['WindDir.'][0]),
-                size=40 + 7*self.wind_data['Wind(km/h)/(kt)'][0],
+                width=40 + 7*self.wind_data['Wind(km/h)/(kt)'][0],
+                height=40 + 7*self.wind_data['Wind(km/h)/(kt)'][0],
                 image_path=os.path.join('wind_analysis',
                                         'images',
                                         'wind_arrow.png')))
@@ -347,11 +356,109 @@ class WindDataDisplayer:
         self.frame.pack(side=tk.RIGHT)  # Pack Frame
 
 
+class TideDataDisplayer:
+    def __init__(self, parent, *args, **kwargs):
+
+        self.parent = parent
+        self.frame = tk.Frame(self.parent)
+        self.data_location = tk.StringVar(self.frame)
+        download_histories()
+        download_swell_rose()
+
+        self.tide_history = self.get_and_clean_data()
+        self.fig, self.ax = plt.subplots(figsize=(4, 2), dpi=100)
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self.frame)
+
+        tide_plot(ax=self.ax,
+                  data=self.tide_history,
+                  name='Tide Height (m)',
+                  c='deepskyblue')
+
+        # self.fig.tight_layout()
+        plt.close(self.fig)
+        self.canvas.draw()
+        self.swell_rose_image = ImageTk.PhotoImage(generate_arrow_image(
+            angle=-90,
+            width=350,
+            height=300,
+            image_path=os.path.join('swell_analysis',
+                                    'images',
+                                    'swell_rose.png')))
+        self.swell_rose_label = tk.Label(
+            self.frame,
+            image=self.swell_rose_image)
+        self.swell_rose_label.image = self.swell_rose_image
+
+        self.update_button = tk.Button(self.frame,
+                                       text="Update Tide Chart",
+                                       command=self.update,
+                                       height=2,
+                                       width=20)
+        self.update_button.grid(row=2, padx=1)
+        self.canvas.get_tk_widget().grid(row=0, pady=1, padx=2)
+        self.swell_rose_label.grid(row=1, padx=1)
+        self.frame.pack()
+
+    def get_and_clean_data(self):
+        path = os.path.join("tide_analysis", "tide_data", "tide_height.csv")
+        tide_height = pd.read_csv(path)
+        tide_height = self.convert_to_datetime(tide_height).iloc[:, 1]
+        return tide_height
+
+    def convert_to_datetime(self, df):
+        df = df.set_index(
+            pd.to_datetime(df.iloc[:, 0],
+                           format="%Y-%m-%d %H:%M:%S"))
+        return df
+
+    def update(self):
+        self.swell_rose_label.forget()
+        self.canvas.get_tk_widget().grid_forget()
+
+        download_histories()
+        download_swell_rose()
+
+        self.tide_history = self.get_and_clean_data()
+        self.fig, self.ax = plt.subplots(figsize=(4, 2), dpi=100)
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self.frame)
+
+        tide_plot(ax=self.ax,
+                  data=self.tide_history,
+                  name='Tide Height (m)',
+                  c='deepskyblue')
+
+        # self.fig.tight_layout()
+        plt.close(self.fig)
+        self.canvas.draw()
+        self.swell_rose_image = ImageTk.PhotoImage(generate_arrow_image(
+            angle=-90,
+            width=350,
+            height=300,
+            image_path=os.path.join('swell_analysis',
+                                    'images',
+                                    'swell_rose.png')))
+        self.swell_rose_label = tk.Label(
+            self.frame,
+            image=self.swell_rose_image)
+        self.swell_rose_label.image = self.swell_rose_image
+
+        self.update_button = tk.Button(self.frame,
+                                       text="Update Tide Chart",
+                                       command=self.update,
+                                       height=2,
+                                       width=20)
+        self.update_button.grid(row=2, padx=1)
+        self.canvas.get_tk_widget().grid(row=0, pady=1, padx=2)
+        self.swell_rose_label.grid(row=1, padx=1)
+        self.frame.pack()
+
+
 if __name__ == '__main__':
     root = tk.Tk()
-    app1 = SwellDataDisplayer(root)
-    app2 = WindDataDisplayer(root)
+    swell_frame = SwellDataDisplayer(root)
+    wind_frame = WindDataDisplayer(root)
+    tide_frame = TideDataDisplayer(root)
     image_path = os.path.join("images", "GUIscreenshot.png")
-    cap = tkcap.CAP(root)     # Master is an instance of tkinter.Tk
-    cap.capture(image_path)       # Capture and Save the screenshot
+    cap = tkcap.CAP(root)  # Master is an instance of tkinter.Tk
+    cap.capture(image_path, overwrite=True)  # Capture and Save the screenshot
     root.mainloop()

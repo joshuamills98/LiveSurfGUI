@@ -1,24 +1,27 @@
-from PIL import Image
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-chrome_options = Options()
-# chrome_options.add_argument("--headless")
+from tide_analysis.tide_api_keys import get_bateman_tide
+import requests
+import os
+from datetime import datetime, timedelta
 
 
-driver = webdriver.Chrome(ChromeDriverManager(version="91.0.4472.101").install(), options=chrome_options)
-url = "https://tides.willyweather.com.au/nsw/south-coast/moruya-heads.html"
+def download_histories(location="Batemans Bay"):
+    """Download tide history from MHL"""
+    start_date = datetime.strftime(
+        datetime.today() - timedelta(days=1),
+        "%Y-%m-%d")
+    end_date = datetime.strftime(
+            datetime.today() + timedelta(days=1),
+            "%Y-%m-%d")
 
-driver.get(url)
-try:
-    element = WebDriverWait(driver, 4).until(
-        EC.presence_of_element_located((By.CLASS_NAME, "block tide-clock"))
-    )
-finally:
-    element.screenshot('foo.png')
-    driver.quit()
+    if location == "Batemans Bay":
+        tide_url = get_bateman_tide(start_date, end_date)
 
-print("end...")
+    response = requests.get(tide_url)
+    with open(os.path.join("tide_analysis",
+                           "tide_data",
+                           "tide_height.csv"), 'wb') as f:
+        f.write(response.content)
+
+
+if __name__ == '__main__':
+    download_histories()
