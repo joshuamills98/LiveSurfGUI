@@ -19,6 +19,37 @@ from tide_analysis.tide_data_download import download_histories
 
 
 class SwellDataDisplayer:
+    """
+    A class used to represent the swell data frame in the tkinter GUI
+
+    Main Attributes
+    ----------
+
+    parent : tkinter Tk
+        main root window
+    frame : tkinter Frame
+        swell frame
+    data_location : tkinter StringVar
+        location of swell buoy
+    swell_height, swell_period, swell_direction : pd.DataFrames
+        time series data
+    canvas: tk FigureCanvasTkAgg
+        plotting canvas for swell data
+    arrow_label: tk Label
+        swell arrow direction pointer
+
+    Main Methods
+    ------------
+    get_and_clean_data:
+        read in swell data and perform necessary cleaning (unnecessary?)
+    place_swell_history:
+        plot all the time series data for the swell
+    plot_swell_text:
+        plot all swell information (direction, size etc.)
+    update:
+        get latest conditions and update all the information in the swell Frame
+
+    """
     def __init__(self, parent, *args, **kwargs):
 
         self.parent = parent
@@ -74,6 +105,7 @@ class SwellDataDisplayer:
         self.frame.pack(side=tk.LEFT)
 
     def get_and_clean_data(self):
+        """Find, read and convert swell_data to datetime format"""
         path = os.path.join("swell_analysis", "swell_data")
         data_fields = ['swell_height.csv',
                        'swell_period.csv',
@@ -87,7 +119,7 @@ class SwellDataDisplayer:
         return swell_height, swell_period, swell_direction
 
     def place_swell_history(self):
-
+        """Place swell data on each of the three axes"""
         plot_on_axis(ax=self.ax[0],
                      data=self.swell_height,
                      name='Swell Height (m)',
@@ -111,7 +143,7 @@ class SwellDataDisplayer:
 
     def plot_swell_text(self, time, height,
                         period, angle):
-
+        """Place swell text data and arrow images"""
         fontStyle = TkFont.Font(family="Lucida Grande", size=16)
 
         strtime = time.strftime("%a %H:%M")
@@ -135,6 +167,7 @@ class SwellDataDisplayer:
         return compass_direction, swell_label, date_format
 
     def convert_to_datetime(self, df):
+
         df = df.set_index(
             pd.to_datetime(df.iloc[:, 0],
                            format="%Y-%m-%d %H:%M:%S"))
@@ -142,6 +175,7 @@ class SwellDataDisplayer:
         return df
 
     def update(self):
+        """Update entire frame (essentially repeat __init__ method)"""
         swell_data_main(self.data_location.get())
         self.arrow_label.grid_forget()
         self.date_format.grid_forget()
@@ -183,6 +217,43 @@ class SwellDataDisplayer:
 
 
 class WindDataDisplayer:
+    """
+    A class used to represent the wind data frame in the tkinter GUI
+
+    Main Attributes
+    ----------
+
+    parent : tkinter Tk
+        main root window
+    frame : tkinter Frame
+        wind frame
+    data_location : tkinter StringVar
+        location of wind sock (from OzForecast), default is Moruya
+    wind_data_url_dict: dictionary
+        dictionary of locations and respective OzForecast url
+    wind_data : pd.DataFrames
+        time series wind data
+    canvas: tk FigureCanvasTkAgg
+        plotting canvas for wind data
+    labels: tk Label
+        labels representing:
+            - wind arrow direction pointer
+            - temperature label
+            - update label (time of update)
+            - wind speed label
+
+    Main Methods
+    ------------
+    get_and_clean_data:
+        read in wind data and perform necessary cleaning (unnecessary?)
+    place_wind_history:
+        plot all the time series data for the wind
+    plot_wind_text:
+        plot all wind information (direction, size etc.)
+    update:
+        get latest conditions and update all the information in the wind Frame
+
+    """
     def __init__(self, parent, *args, **kwargs):
         self.parent = parent
         self.frame = tk.Frame(self.parent)
@@ -247,6 +318,7 @@ class WindDataDisplayer:
         self.frame.pack(side=tk.RIGHT)
 
     def get_and_clean_data(self):
+        """read in and clean wind data, return dataframe"""
         csv_name = self.data_location \
             .get() \
             .replace(' ', '_') + '_Wind_Data.csv'
@@ -259,7 +331,7 @@ class WindDataDisplayer:
         return wind_df
 
     def place_wind_history(self):
-
+        """place all wind history on frame"""
         plot_on_axis(ax=self.ax[0],
                      data=self.wind_data['Apparent Temp(°C)'],
                      name=r'Temperature ($^{\circ}$C)',
@@ -285,7 +357,7 @@ class WindDataDisplayer:
     def plot_wind_text(self, time, temp,
                        speed, direction,
                        gusts):
-
+        """plot all wind text (speed, direction, temp etc.)"""
         fontStyle = TkFont.Font(family="Lucida Grande", size=16)
 
         strtime = time.strftime("%a %H:%M")
@@ -309,6 +381,7 @@ class WindDataDisplayer:
         return speed_label, temp_label, date_label
 
     def update(self):
+        """read in additional wind data and update frame"""
         wind_data_main(self.wind_data_url_dict[self.data_location.get()])
         self.arrow_label.grid_forget()
         self.speed_label.grid_forget()
@@ -357,13 +430,44 @@ class WindDataDisplayer:
 
 
 class TideDataDisplayer:
+    """
+    A class used to represent the tide data frame in the tkinter GUI
+
+    Main Attributes
+    ----------
+
+    parent : tkinter Tk
+        main root window
+    frame : tkinter Frame
+        wind frame
+    data_location : tkinter StringVar
+        location of tide buoy (from MHL), default is batemans bay
+    tide_history : pd.DataFrames
+        time series tide data
+    canvas: tk FigureCanvasTkAgg
+        plotting canvas for tide data
+    labels: tk Label
+        labels representing:
+            - swell rose
+            - tide displayer
+
+    Main Methods
+    ------------
+    get_and_clean_data:
+        read in wind data and perform necessary cleaning (unnecessary?)
+    (local import) tide_plot:
+        plot all the time series data for the tide data
+    update:
+        get latest conditions and update all the information in the wind Frame
+
+    """
     def __init__(self, parent, *args, **kwargs):
 
         self.parent = parent
         self.frame = tk.Frame(self.parent)
         self.data_location = tk.StringVar(self.frame)
-        download_histories()
-        download_swell_rose()
+        download_histories()  # Load in tide history
+        download_swell_rose()  # download swell rose from MHL
 
         self.tide_history = self.get_and_clean_data()
         self.fig, self.ax = plt.subplots(figsize=(4, 2), dpi=100)
@@ -394,6 +498,8 @@ class TideDataDisplayer:
                                        command=self.update,
                                        height=2,
                                        width=20)
+
+        # Place all widgets on grid
         self.update_button.grid(row=2, padx=1)
         self.canvas.get_tk_widget().grid(row=0, pady=1, padx=2)
         self.swell_rose_label.grid(row=1, padx=1)
