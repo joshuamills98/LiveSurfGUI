@@ -51,7 +51,6 @@ class SwellDataDisplayer:
 
     """
     def __init__(self, parent, *args, **kwargs):
-
         self.parent = parent
         self.frame = tk.Frame(self.parent)
         self.data_location = tk.StringVar(self.frame)
@@ -175,7 +174,7 @@ class SwellDataDisplayer:
         return df
 
     def update(self):
-        """Update entire frame (essentially repeat __init__ method)"""
+        """Update entire frame with new information called from the web"""
         swell_data_main(self.data_location.get())
         self.arrow_label.grid_forget()
         self.date_format.grid_forget()
@@ -331,7 +330,7 @@ class WindDataDisplayer:
         return wind_df
 
     def place_wind_history(self):
-        """place all wind history on frame"""
+        """Place all wind history on frame"""
         plot_on_axis(ax=self.ax[0],
                      data=self.wind_data['Apparent Temp(°C)'],
                      name=r'Temperature ($^{\circ}$C)',

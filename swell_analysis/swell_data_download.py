@@ -46,7 +46,6 @@ def download_histories(location="Batemans Bay"):
                            "swell_period.csv"), 'wb') as f:
         f.write(response.content)
 
-
 def download_swell_rose():
     """Download latest swell rose from BOM"""
     try:
