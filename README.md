@@ -7,7 +7,7 @@ One of my largest frustrations is needing to go to many different websites in or
  - PIL - image processing
  - matplotlib - plotting
 
-I am currently extending its functionality to incorporate a wider range of locations.
+I am currently extending its functionality to incorporate a wider range of locations. At the moment the GUI supports locations across the south coast of NSW, Australia, but I will extended the functionality for use in the UK as well.
 
 ## Data Sources
 This project makes use of live swell data provided by [Manly Hydraulics Lab](https://mhl.nsw.gov.au/) as well as live wind data provided by [OzForecast](ozforecast.com.au)
