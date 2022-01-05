@@ -22,7 +22,7 @@ class SwellDataDisplayer:
     """
     A class used to represent the swell data frame in the tkinter GUI
 
-    Main Attributes
+    Main Attributes:
     ----------
 
     parent : tkinter Tk
